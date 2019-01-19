@@ -40,7 +40,7 @@ namespace my {
         };
         bool small;
     public:
-        function() noexcept {}
+        function() noexcept : func(nullptr), small(false) {}
 
         template<typename F>
         function(F func) {

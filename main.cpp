@@ -28,6 +28,7 @@ struct functor {
 
 int main()
 {
+    /*
     // 1
     function<std::string(int)> f1([] (int a) { return "TEST 1 : PASSED"; });
     cout << f1(1) << endl;
@@ -55,6 +56,7 @@ int main()
     // 5
     functor p;
     function<int()> f5 = p;
+    function<int()> f10 = std::move(p);
     if (f5() == 1) {
         cout << "TEST 5 : PASSED" << endl;
     } else {
@@ -73,5 +75,7 @@ int main()
     // f3(5);
 
     //8
+    */
+    function<int(int,int,int,int,int)> f8;
     return 0;
 }
