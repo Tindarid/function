@@ -15,16 +15,17 @@ namespace my {
         class functor {
         public:
             virtual ~functor() {};
-            virtual R result(Args...) const = 0;
+            virtual R result(Args...) = 0;
             virtual std::unique_ptr<functor> copy() const = 0;
         };
 
         template<typename T>
         class functor_impl : public functor {
         public:
+            functor_impl(T&& t) : t(std::move(t)) {}
             functor_impl(const T& t) : t(t) {}
             ~functor_impl() override = default;
-            R result(Args... args) const override {
+            R result(Args... args) override {
                 return t(std::forward<Args>(args)...);
             }
             std::unique_ptr<functor> copy() const override {
@@ -45,10 +46,10 @@ namespace my {
         function(F func) {
             if (sizeof(func) > FUNCTION_BUF_SIZE) {
                 this->small = false;
-                new (this->buf) std::unique_ptr<functor_impl<F>>(std::make_unique<functor_impl<F>>(func));
+                new (this->buf) std::unique_ptr<functor_impl<F>>(std::make_unique<functor_impl<F>>(std::move(func)));
             } else {
                 this->small = true;
-                new (this->buf) functor_impl<F>(func);
+                new (this->buf) functor_impl<F>(std::move(func));
             }
         }
 

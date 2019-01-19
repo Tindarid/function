@@ -13,6 +13,14 @@ int some(int a) {
 }
 
 struct functor {
+    functor(){}
+    functor(functor&&) {
+        cout << "In move" << endl;
+    }
+
+    functor(const functor&) {
+        cout << "In copy" << endl;
+    }
     int operator()() const {
         return 1;
     }
@@ -63,5 +71,7 @@ int main()
     // 7
     // Crashes after moving
     // f3(5);
+
+    //8
     return 0;
 }
