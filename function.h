@@ -15,7 +15,7 @@ namespace my {
         class functor {
         public:
             virtual ~functor() {};
-            virtual R result(Args...) = 0;
+            virtual R result(Args&&...) = 0;
             virtual std::unique_ptr<functor> copy() const = 0;
         };
 
@@ -25,7 +25,7 @@ namespace my {
             functor_impl(T&& t) : t(std::move(t)) {}
             functor_impl(const T& t) : t(t) {}
             ~functor_impl() override = default;
-            R result(Args... args) override {
+            R result(Args&&... args) override {
                 return t(std::forward<Args>(args)...);
             }
             std::unique_ptr<functor> copy() const override {
