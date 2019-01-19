@@ -5,7 +5,7 @@ using std::endl;
 using my::function;
 
 void q() {
-    cout << 2 << endl;
+    cout << "TEST 4 : PASSED" << endl;
 }
 
 int some(int a) {
@@ -13,41 +13,55 @@ int some(int a) {
 }
 
 struct functor {
-    int operator()() {
+    int operator()() const {
         return 1;
     }
 };
 
 int main()
 {
-    /*
-    cout << "Hello World!" << endl;
-    function<void()> f = []() { cout << 1 << endl; };
-    f();
-    f = g;
-    f();
-    function<int(int)> some2 = some;
-    cout << some2(5) << endl;
-    function<int()> k = functor();
-    cout << k() << endl;
-    */
-    /*
-    function<void()> f(nullptr);
-    if (f) { f(); };
-    */
-    function<void()> f = []() { cout << 1 << endl; };
-    function<void()> g(f);
-    cout << "In g(): " << endl;
-    g();
-    cout << "In f(): " << endl;
-    f();
-    cout << endl;
-    function<void()> k(std::move(f));
-    cout << "In g(): " << endl;
-    g();
-    cout << "In k(): " << endl;
-    k();
-    cout << "In f(): " << endl;
-    if (f) { f(); };
+    // 1
+    function<std::string(int)> f1([] (int a) { return "TEST 1 : PASSED"; });
+    cout << f1(1) << endl;
+
+    // 2
+    function<int(int)> f2(some);
+    if (f2(2) == 4) {
+        cout << "TEST 2 : PASSED" << endl;
+    } else {
+        cout << "TEST 2 : FAILED" << endl;
+    }
+
+    // 3
+    function<int(int)> f3(f2);
+    if (f3(5) == 10) {
+        cout << "TEST 3 : PASSED" << endl;
+    } else {
+        cout << "TEST 3 : FAILED" << endl;
+    }
+
+    // 4
+    function<void()> f4(q);
+    f4();
+
+    // 5
+    functor p;
+    function<int()> f5 = p;
+    if (f5() == 1) {
+        cout << "TEST 5 : PASSED" << endl;
+    } else {
+        cout << "TEST 5 : FAILED" << endl;
+    }
+
+    // 6
+    function<int(int)> f6(std::move(f3));
+    if (f6(6) == 12) {
+        cout << "TEST 6 : PASSED" << endl;
+    } else {
+        cout << "TEST 6 : FAILED" << endl;
+    }
+    // 7
+    // Crashes after moving
+    // f3(5);
     return 0;
 }

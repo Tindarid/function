@@ -2,6 +2,8 @@
 #define FUNCTION_H
 
 #include <memory>
+#include <cstring>
+#define FUNCTION_BUF_SIZE 64
 
 namespace my {
     template<typename>
@@ -23,7 +25,7 @@ namespace my {
             functor_impl(const T& t) : t(t) {}
             ~functor_impl() override = default;
             R result(Args... args) const override {
-                return t(args...);
+                return t(std::forward<Args>(args)...);
             }
             std::unique_ptr<functor> copy() const override {
                 return std::make_unique<functor_impl<T>>(t);
@@ -31,27 +33,52 @@ namespace my {
         private:
             T t;
         };
-        std::unique_ptr<functor> func;
+        union {
+            std::unique_ptr<functor> func;
+            char buf[FUNCTION_BUF_SIZE];
+        };
+        bool small;
     public:
         function() noexcept {}
 
         template<typename F>
         function(F func) {
-            this->func = std::make_unique<functor_impl<F>>(func);
+            if (sizeof(func) > FUNCTION_BUF_SIZE) {
+                this->small = false;
+                new (this->buf) std::unique_ptr<functor_impl<F>>(std::make_unique<functor_impl<F>>(func));
+            } else {
+                this->small = true;
+                new (this->buf) functor_impl<F>(func);
+            }
         }
 
-        function(std::nullptr_t) noexcept : func(nullptr) {}
+        function(std::nullptr_t) noexcept : func(nullptr), small(false) {}
 
-        function(const function& other) : func(other.func->copy()) {}
+        function(const function& other) {
+            if (other.small) {
+                this->small = true;
+                memcpy(this->buf, other.buf, FUNCTION_BUF_SIZE);
+            } else {
+                this->small = false;
+                func = other.func->copy();
+            }
+        }
 
-        function(function&& other) noexcept : func(nullptr) {
+        function(function&& other) noexcept : func(nullptr), small(false) {
             this->swap(other);
         }
 
-        ~function() {}
+        ~function() {
+            if (this->small) {
+                ((functor*)this->buf)->~functor();
+            } else {
+                this->func.reset();
+            }
+        }
 
-        //TODO
         function& operator=(const function& other) {
+            auto temp(other);
+            this->swap(temp);
             return *this;
         }
 
@@ -60,16 +87,9 @@ namespace my {
             return *this;
         }
 
-        /*
-        template<typename F>
-        function& operator=(F func) {
-            this->func = std::make_unique<functor_impl<F>>(func);
-            return *this;
-        }
-        */
-
         void swap(function& other) noexcept {
-            std::swap(other.func, this->func);
+            std::swap(this->buf, other.buf);
+            std::swap(this->small, other.small);
         }
 
         explicit operator bool() const noexcept {
@@ -77,7 +97,8 @@ namespace my {
         }
 
         R operator()(Args... args) const {
-            return func->result(args...);
+            return small ? ((functor*)(buf))->result(std::forward<Args>(args)...)
+                         : func->result(std::forward<Args>(args)...);
         }
     };
 }
